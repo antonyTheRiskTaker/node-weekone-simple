@@ -17,7 +17,7 @@ const port = 3030;
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(fileUpload());
 
-// uploadDirectory is the path to our directory named uploaded, where we will store our cached files, path.sep provides the platform specific path segment separator
+// uploadDirectory is the path to our directory named uploaded, where we will store our cached files, path.sep provides the platform specific path segment separator, e.g. '/' for Linux or POSIX systems, '\' for the Windows system
 const uploadDirectory = __dirname + path.sep + "uploaded";
 
 // Server the uploaded folder to the server, allowing the users to download cached information.
@@ -29,7 +29,7 @@ let caches = {};
 
 // Promised version of Read and Write files
 
-// writeFile is a function which takes the name of the file and the body (data) for storage - it will write the file to our uploadDirectory 'uploaded', this promise resolves with the name of the file
+// writeFile is a function which takes the name of the file (i.e. 1st argument) and the body (data) for storage (i.e. 2nd argument) - it will write the file to our uploadDirectory 'uploaded', this promise resolves with the name of the file
 function writeFile(name, body) {
   return new Promise((resolve, reject) => {
     fs.writeFile(uploadDirectory + path.sep + name, body, (err) => {
@@ -39,6 +39,7 @@ function writeFile(name, body) {
         resolve(name);
       }
     });
+    // (Line below) the resolved file name is passed into the callback function 'readFile'
   }).then(readFile);
 }
 
@@ -57,12 +58,15 @@ function readFile(file) {
 }
 
 app.get("/", (req, res) => {
-  // logic for reading your uploaded file and storing al the data back into a cache reach reload
+  // logic for reading your uploaded file and storing all the data back into a cache reach reload
   res.sendFile(__dirname + "/pages/index.html");
 });
 
-console.log(caches);
+console.log('Printing caches:', caches);
+const greeting = fs.readFileSync(`${__dirname}/greet.txt`, 'utf8');
+console.log('Printing greeting:', greeting);
 
+// (This '/files' post request) to upload files
 app.post("/files", (req, res) => {
   // after the request path upload.single('upload'),
   console.log(req.files);
@@ -103,13 +107,16 @@ app.post("/files", (req, res) => {
 });
 
 app.get("/uploaded/:name", (req, res) => {
+  // (The if block below) to make sure that the requested file exists; if not, to retrieve it from the server (i.e. the 'uploaded' folder) and store it in the caches object
   if (caches[req.params.name] == null) {
     console.log("reading from folder");
+    // (Line below) to create a new cache property (property = name-value pair in an object) representing the read file
     caches[req.params.name] = readFile(req.params.name);
   }
   console.log(caches);
   console.log(caches[req.params.name]);
 
+  // (The then-catch code below) once we make sure that the requested file is in the caches object, we can then send the file (in the form of a response body) back to the client as a response; if not, send back a message denoting some server error
   caches[req.params.name]
     .then((body) => {
       console.log(body);
