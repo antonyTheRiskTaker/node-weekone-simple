@@ -62,10 +62,6 @@ app.get("/", (req, res) => {
   res.sendFile(__dirname + "/pages/index.html");
 });
 
-console.log('Printing caches:', caches);
-const greeting = fs.readFileSync(`${__dirname}/greet.txt`, 'utf8');
-console.log('Printing greeting:', greeting);
-
 // (This '/files' post request) to upload files
 app.post("/files", (req, res) => {
   // after the request path upload.single('upload'),
@@ -94,7 +90,7 @@ app.post("/files", (req, res) => {
   let file = req.files.upload.name;
   let data = req.files.upload.data;
 
-  caches[file] = writeFile(file, data);
+  caches[file] = writeFile(file, data); // Continue from here
 
   caches[file]
     .then(() =>
